@@ -26,7 +26,8 @@ var legendText = ["0", "", "10", "", "1000", "", "5000", ""];
 var legendColors = ["#fff7bc", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4c02", "#993404", "#662506"];
 
 
-function ready(error, data, us) {
+function ready(error, data, us,) {
+	console.log("Data",data);
 
 	var counties = topojson.feature(us, us.objects.counties);
 
@@ -110,9 +111,11 @@ function ready(error, data, us) {
 		.text(function(d, i) { return legendText[i]; });
 
 	function update(day){
+
 		slider.property("value", day);
 		d3.select(".year").text("Day: " +day);
 		countyShapes.style("fill", function(d) {
+			// console.log(d.properties);
             if ( typeof d.properties.date != "undefined" ) {
                 return color(d.properties.date[0][day]);
             } else {
@@ -127,13 +130,94 @@ function ready(error, data, us) {
 			.attr("min", 1)
 			.attr("max", 80)
 			.attr("step", 1)
+			.attr("id", "slide")
 			.on("input", function() {
 				day = this.value;
+				console.log("Hello");
 				update(day);
 			});
 
-update(1);
+	update(1);
 
+
+	var
+    radius = Math.min(width, height) / 2;
+
+	var color1 = d3.scale.category20();
+
+	var pie = d3.layout.pie()
+	    .value(function(d) { return d["1"]; })
+	    .sort(null);
+
+	var arc = d3.svg.arc()
+	    .innerRadius(radius - 100)
+	    .outerRadius(radius - 20);
+
+	var svgpie = d3.select("body").append("svg")
+	    .attr("width", width)
+	    .attr("height", height)
+	  .append("g")
+	    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+	d3.csv("covid_data_processed.csv", type, function(error, data) {
+		var slide = d3.select("#slide")
+			.on("input", function() {
+					day = this.value;
+					// console.log(day);
+					update(day);
+					change(data,day);
+				});
+
+	  var path = svgpie.datum(data).selectAll("path")
+	      .data(pie)
+	    .enter().append("path")
+	      .attr("fill", function(d, i) { return color1(i); })
+	      .attr("d", arc)
+	      .each(function(d) { this._current = d; }); // store the initial angles
+
+	path
+		.on("mouseover", function(d) {
+			// console.log("D",d);
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 1);
+				tooltip.html(
+				"<p><strong>" + d.data["Admin2"] + "</strong></p>" +
+				"<table><tbody><tr><td class='wide'>Cases on Day " + day +":</td><td>" + d.data[day] + "</td></tr>" +
+				"</tbody></table>"
+				)
+				.style("left", (d3.event.pageX + 15) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
+			})
+			.on("mouseout", function(d) {
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 0);
+			});
+
+	  function change(data,day) {
+	    pie.value(function(d) {return d[day]; }); // change the value function
+	    path = path.data(pie); // compute the new angles
+	    path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
+	  }
+	});
+
+	function type(d) {
+		for (i = 1; i < 81; i++) {
+		  d[i] = +d[i];
+		}
+	  return d;
+	}
+
+
+	function arcTween(a) {
+	  var i = d3.interpolate(this._current, a);
+	  this._current = i(0);
+	  return function(t) {
+	    return arc(i(t));
+	  };
+	}
 }
+
 
 d3.select(self.frameElement).style("height", "685px");
