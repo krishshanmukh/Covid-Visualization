@@ -32,6 +32,7 @@ function ready(error, data, us) {
 	var counties = topojson.feature(us, us.objects.counties);
 
 	data.forEach(function(d) {
+		// console.log("Rows",Object.keys(d));
 		d.fips = +d.fips;
 	});
 
@@ -85,14 +86,50 @@ function ready(error, data, us) {
 			select_state(data, d.properties.date[0]["Province_State"]);
 		});
 
-		function select_state(data, state){
-			// console.log("State1",data);
-			statewise = data.filter(function(d){return d["Province_State"] == state;})
-			console.log("State",statewise);
-			d3.selectAll("#donut").remove();
-			donutchart(statewise);
-			return statewise;
-		}
+	function select_state(data, state){
+		// console.log("State1",data);
+		statewise = data.filter(function(d){return d["Province_State"] == state;})
+		console.log("State",statewise);
+		d3.selectAll("#donut").remove();
+		d3.selectAll("#parc").remove();
+		update(day);
+		donutchart(statewise);
+		parc(statewise);
+
+		// var stateByDay = d3.nest()
+		//   .key(function(d) { console.log(d["Admin2"]);return d["Admin2"]; })
+		//   .entries(statewise);
+		//  one = stateByDay.filter(function(d){console.log(d); return d.values["0"]});
+	 //  	console.log(stateByDay);
+	 //  	console.log(one);
+
+		// var counties = {};
+		// var dates = [];
+		// statewise.forEach(function(d,i) {
+		// 	// console.log("Rows",Object.keys(d));
+		// 	var st = {};
+		// 	var cnt = {};
+		// 	// d.forEach(function(e,i){
+		// 		var k = 0;
+		// 	for( var e in d){
+		// 		k++;
+		// 		cnt[k] = e[k];
+		// 	}
+		// 	st[d["Admin2"]] = cnt;
+		// 	counties[i] = st;
+		// 	console.log("D[0]",counties);
+
+		// 	for (var j = 1; j <= 80; i++) {
+		// 		var obj = {}
+		// 		obj[d["Admin2"]] = d[j];
+		// 	   dates.push(j);
+		// 	   dates[j] = {obj};
+		// 	}
+		// 	console.log("Dates",dates);
+		// 	return statewise;
+		// });
+		
+	}
 
 	svg.append("path")
 		.datum(topojson.feature(us, us.objects.states, function(a, b) { return a !== b; }))
@@ -234,6 +271,131 @@ function ready(error, data, us) {
 		  return function(t) {
 		    return arc(i(t));
 		  };
+		}
+	}//end of donut chart
+	parc(data);
+	function parc(cars){
+		var x = d3.scale.ordinal().rangePoints([0, width], 1),
+		    y = {},
+		    dragging = {};
+
+		var line = d3.svg.line(),
+		    axis = d3.svg.axis().orient("left"),
+		    background,
+		    foreground;
+
+		var svg = d3.select("body").append("svg")
+			.attr("id","parc")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		  // Extract the list of dimensions and create a scale for each.
+		  x.domain(dimensions = d3.keys(cars[0]).filter(function(d) {
+		  	console.log("PARCOOD",d);
+		  	if(d == "1"){
+		  		console.log("Laudu");
+		  	}
+		    return (d != "Admin2" && d != "Combined_Key"&& d != "Country_Region"&& d != "Lat"&& d != "Long_"&& d != "Province_State"&& d != "UID"&& d != "code3"&& d != "fips"&& d != "iso2"&& d != "iso3"&& d != "1"&& d != "2"&& d != "3"&& d != "4"&& d != "5"&& d != "6"&& d != "7"&& d != "8"&& d != "9"&& d != "11"&& d != "12"&& d != "13"&& d != "14"&& d != "15"&& d != "16"&& d != "17"&& d != "18"&& d != "19"&& d != "21"&& d != "22"&& d != "23" && d != "24" && d != "25" && d != "26" && d != "27" && d != "28" && d != "29" && d != "31" && d != "32" && d != "33" && d != "34" && d != "35" && d != "36" && d != "37" && d != "38" && d != "39" && d != "41" && d != "42" && d != "43" && d != "44" && d != "45" && d != "46" && d != "47" && d != "48" && d != "49" && d != "51" && d != "52" && d != "53" && d != "54" && d != "55" && d != "56" && d != "57" && d != "58" && d != "59" && d != "61" && d != "62" && d != "63" && d != "64" && d != "65" && d != "66" && d != "67" && d != "68" && d != "69" && d != "71" && d != "72" && d != "73" && d != "74" && d != "75" && d != "76" && d != "77" && d != "78" && d != "79") && (y[d] = d3.scale.linear()
+		    // return (d == "1" && d == "10" && d == "20" && d == "40" && d == "60" && d == "80") && (y[d] = d3.scale.linear()
+		        .domain(d3.extent(cars, function(p) { return +p[d]; }))
+		        .range([height, 0]));
+		  }));
+
+		  // Add grey background lines for context.
+		  background = svg.append("g")
+		      .attr("class", "background")
+		    .selectAll("path")
+		      .data(cars)
+		    .enter().append("path")
+		      .attr("d", path);
+
+		  // Add blue foreground lines for focus.
+		  foreground = svg.append("g")
+		      .attr("class", "foreground")
+		    .selectAll("path")
+		      .data(cars)
+		    .enter().append("path")
+		      .attr("d", path);
+
+		  // Add a group element for each dimension.
+		  var g = svg.selectAll(".dimension")
+		      .data(dimensions)
+		    .enter().append("g")
+		      .attr("class", "dimension")
+		      .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+		      .call(d3.behavior.drag()
+		        .origin(function(d) { return {x: x(d)}; })
+		        .on("dragstart", function(d) {
+		          dragging[d] = x(d);
+		          background.attr("visibility", "hidden");
+		        })
+		        .on("drag", function(d) {
+		          dragging[d] = Math.min(width, Math.max(0, d3.event.x));
+		          foreground.attr("d", path);
+		          dimensions.sort(function(a, b) { return position(a) - position(b); });
+		          x.domain(dimensions);
+		          g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+		        })
+		        .on("dragend", function(d) {
+		          delete dragging[d];
+		          transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
+		          transition(foreground).attr("d", path);
+		          background
+		              .attr("d", path)
+		            .transition()
+		              .delay(500)
+		              .duration(0)
+		              .attr("visibility", null);
+		        }));
+
+		  // Add an axis and title.
+		  g.append("g")
+		      .attr("class", "axis")
+		      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+		    .append("text")
+		      .style("text-anchor", "middle")
+		      .attr("y", -9)
+		      .text(function(d) { return d; });
+
+		  // Add and store a brush for each axis.
+		  g.append("g")
+		      .attr("class", "brush")
+		      .each(function(d) {
+		        d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d]).on("brushstart", brushstart).on("brush", brush));
+		      })
+		    .selectAll("rect")
+		      .attr("x", -8)
+		      .attr("width", 16);
+
+		function position(d) {
+		  var v = dragging[d];
+		  return v == null ? x(d) : v;
+		}
+
+		function transition(g) {
+		  return g.transition().duration(500);
+		}
+
+		// Returns the path for a given data point.
+		function path(d) {
+		  return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+		}
+
+		function brushstart() {
+		  d3.event.sourceEvent.stopPropagation();
+		}
+
+		// Handles a brush event, toggling the display of foreground lines.
+		function brush() {
+		  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+		      extents = actives.map(function(p) { return y[p].brush.extent(); });
+		  foreground.style("display", function(d) {
+		    return actives.every(function(p, i) {
+		      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+		    }) ? null : "none";
+		  });
 		}
 	}
 }
