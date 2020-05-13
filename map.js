@@ -293,10 +293,6 @@ function ready(error, data, us) {
 
 		  // Extract the list of dimensions and create a scale for each.
 		  x.domain(dimensions = d3.keys(cars[0]).filter(function(d) {
-		  	console.log("PARCOOD",d);
-		  	if(d == "1"){
-		  		console.log("Laudu");
-		  	}
 		    return (d != "Admin2" && d != "Combined_Key"&& d != "Country_Region"&& d != "Lat"&& d != "Long_"&& d != "Province_State"&& d != "UID"&& d != "code3"&& d != "fips"&& d != "iso2"&& d != "iso3"&& d != "1"&& d != "2"&& d != "3"&& d != "4"&& d != "5"&& d != "6"&& d != "7"&& d != "8"&& d != "9"&& d != "11"&& d != "12"&& d != "13"&& d != "14"&& d != "15"&& d != "16"&& d != "17"&& d != "18"&& d != "19"&& d != "21"&& d != "22"&& d != "23" && d != "24" && d != "25" && d != "26" && d != "27" && d != "28" && d != "29" && d != "31" && d != "32" && d != "33" && d != "34" && d != "35" && d != "36" && d != "37" && d != "38" && d != "39" && d != "41" && d != "42" && d != "43" && d != "44" && d != "45" && d != "46" && d != "47" && d != "48" && d != "49" && d != "51" && d != "52" && d != "53" && d != "54" && d != "55" && d != "56" && d != "57" && d != "58" && d != "59" && d != "61" && d != "62" && d != "63" && d != "64" && d != "65" && d != "66" && d != "67" && d != "68" && d != "69" && d != "71" && d != "72" && d != "73" && d != "74" && d != "75" && d != "76" && d != "77" && d != "78" && d != "79") && (y[d] = d3.scale.linear()
 		    // return (d == "1" && d == "10" && d == "20" && d == "40" && d == "60" && d == "80") && (y[d] = d3.scale.linear()
 		        .domain(d3.extent(cars, function(p) { return +p[d]; }))
@@ -317,7 +313,25 @@ function ready(error, data, us) {
 		    .selectAll("path")
 		      .data(cars)
 		    .enter().append("path")
-		      .attr("d", path);
+		      .attr("d", path)
+	      		.on("mouseover", function(d) {
+			// console.log("D",d);
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 1);
+				tooltip.html(
+				"<p><strong>" + d["Admin2"] + "</strong></p>" +
+				"<table><tbody><tr><td class='wide'>Cases on Day " + day +":</td><td>" + d[day] + "</td></tr>" +
+				"</tbody></table>"
+				)
+				.style("left", (d3.event.pageX + 15) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
+			})
+			.on("mouseout", function(d) {
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 0);
+			});
 
 		  // Add a group element for each dimension.
 		  var g = svg.selectAll(".dimension")
@@ -380,7 +394,9 @@ function ready(error, data, us) {
 
 		// Returns the path for a given data point.
 		function path(d) {
-		  return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+			// console.log("D",d);
+			li = line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+		  return li;
 		}
 
 		function brushstart() {
