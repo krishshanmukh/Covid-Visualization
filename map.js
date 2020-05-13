@@ -19,6 +19,7 @@ tooltip = d3.select("body").append("div")
 
 queue()
 	.defer(d3.csv, "covid_data_processed.csv")
+	.defer(d3.csv, "beds.csv")
 	.defer(d3.json, "us-counties.topojson")
 	.await(ready);
 
@@ -26,14 +27,31 @@ var legendText = ["0", "", "10", "", "1000", "", "5000", ""];
 var legendColors = ["#fff7bc", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4c02", "#993404", "#662506"];
 
 
-function ready(error, data, us) {
+
+function ready(error, data, beds, us) {
 	console.log("Data",data);
 
+	// d3.csv("beds.csv", function(data) {
+ //    		beds = data;
+ //    		beds.forEach(function(d) {
+	// 		// console.log("Rows",Object.keys(d));
+	// 		d.fips = +d.fips;
+	// 	});
+	// });
+	console.log("Beds",beds);
+	
 	var counties = topojson.feature(us, us.objects.counties);
 
 	data.forEach(function(d) {
 		// console.log("Rows",Object.keys(d));
 		d.fips = +d.fips;
+	});
+	beds.forEach(function(d) {
+		// console.log("Rows",Object.keys(d));
+		d.BEDS = +d.BEDS;
+		d.cases = +d.cases;
+		d.deaths = +d.deaths;
+		d.POPULATION = +d.POPULATION;
 	});
 
 	var dataByCountyByYear = d3.nest()
@@ -84,6 +102,7 @@ function ready(error, data, us) {
 		.on("click", function(d) {
 			console.log("Click",d);
 			select_state(data, d.properties.date[0]["Province_State"]);
+			select_state_pc(beds,d.properties.date[0]["Province_State"]);
 		});
 
 	function select_state(data, state){
@@ -94,41 +113,17 @@ function ready(error, data, us) {
 		d3.selectAll("#parc").remove();
 		update(day);
 		donutchart(statewise);
-		parc(statewise);
-
-		// var stateByDay = d3.nest()
-		//   .key(function(d) { console.log(d["Admin2"]);return d["Admin2"]; })
-		//   .entries(statewise);
-		//  one = stateByDay.filter(function(d){console.log(d); return d.values["0"]});
-	 //  	console.log(stateByDay);
-	 //  	console.log(one);
-
-		// var counties = {};
-		// var dates = [];
-		// statewise.forEach(function(d,i) {
-		// 	// console.log("Rows",Object.keys(d));
-		// 	var st = {};
-		// 	var cnt = {};
-		// 	// d.forEach(function(e,i){
-		// 		var k = 0;
-		// 	for( var e in d){
-		// 		k++;
-		// 		cnt[k] = e[k];
-		// 	}
-		// 	st[d["Admin2"]] = cnt;
-		// 	counties[i] = st;
-		// 	console.log("D[0]",counties);
-
-		// 	for (var j = 1; j <= 80; i++) {
-		// 		var obj = {}
-		// 		obj[d["Admin2"]] = d[j];
-		// 	   dates.push(j);
-		// 	   dates[j] = {obj};
-		// 	}
-		// 	console.log("Dates",dates);
-		// 	return statewise;
-		// });
-		
+		parc(statewise);		
+	}
+	function select_state_pc(data, state){
+		// console.log("State1",data);
+		statewise = data.filter(function(d){return d["state"] == state;})
+		console.log("StatePC",statewise);
+		d3.selectAll("#parcpc").remove();
+		parcpc(statewise);
+		// update(day);
+		// donutchart(statewise);
+		// parc(statewise);		
 	}
 
 	svg.append("path")
@@ -414,6 +409,147 @@ function ready(error, data, us) {
 		  });
 		}
 	}
+	function parcpc(cars){
+		var x = d3.scale.ordinal().rangePoints([0, width], 1),
+		    y = {},
+		    dragging = {};
+
+		var line = d3.svg.line(),
+		    axis = d3.svg.axis().orient("left"),
+		    background,
+		    foreground;
+
+		var svg = d3.select("body").append("svg")
+			.attr("id","parcpc")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		  // Extract the list of dimensions and create a scale for each.
+		  x.domain(dimensions = d3.keys(cars[0]).filter(function(d) {
+		    return (d != "county" && d != "state" && d != "date" && d != "Combined_Key"&& d != "COUNTYFIPS"&& d != "fips") && (y[d] = d3.scale.linear()
+		    // return (d == "1" && d == "10" && d == "20" && d == "40" && d == "60" && d == "80") && (y[d] = d3.scale.linear()
+		        .domain(d3.extent(cars, function(p) { return +p[d]; }))
+		        .range([height, 0]));
+		  }));
+
+		  // Add grey background lines for context.
+		  background = svg.append("g")
+		      .attr("class", "background")
+		    .selectAll("path")
+		      .data(cars)
+		    .enter().append("path")
+		      .attr("d", path);
+
+		  // Add blue foreground lines for focus.
+		  foreground = svg.append("g")
+		      .attr("class", "foreground")
+		    .selectAll("path")
+		      .data(cars)
+		    .enter().append("path")
+		      .attr("d", path)
+	      		.on("mouseover", function(d) {
+			// console.log("D",d);
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 1);
+				tooltip.html(
+				"<p><strong>" + d["state"] + " : " + d['county']+ "</strong></p>" +
+				"<table><tbody><tr><td class='wide'>Cases on Day " +"80:</td><td>" + d['cases'] + "</td></tr>" +
+				"</tbody></table>"
+				)
+				.style("left", (d3.event.pageX + 15) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
+			})
+			.on("mouseout", function(d) {
+				tooltip.transition()
+				.duration(250)
+				.style("opacity", 0);
+			});
+
+		  // Add a group element for each dimension.
+		  var g = svg.selectAll(".dimension")
+		      .data(dimensions)
+		    .enter().append("g")
+		      .attr("class", "dimension")
+		      .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+		      .call(d3.behavior.drag()
+		        .origin(function(d) { return {x: x(d)}; })
+		        .on("dragstart", function(d) {
+		          dragging[d] = x(d);
+		          background.attr("visibility", "hidden");
+		        })
+		        .on("drag", function(d) {
+		          dragging[d] = Math.min(width, Math.max(0, d3.event.x));
+		          foreground.attr("d", path);
+		          dimensions.sort(function(a, b) { return position(a) - position(b); });
+		          x.domain(dimensions);
+		          g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+		        })
+		        .on("dragend", function(d) {
+		          delete dragging[d];
+		          transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
+		          transition(foreground).attr("d", path);
+		          background
+		              .attr("d", path)
+		            .transition()
+		              .delay(500)
+		              .duration(0)
+		              .attr("visibility", null);
+		        }));
+
+		  // Add an axis and title.
+		  g.append("g")
+		      .attr("class", "axis")
+		      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+		    .append("text")
+		      .style("text-anchor", "middle")
+		      .attr("y", -9)
+		      .text(function(d) { return d; });
+
+		  // Add and store a brush for each axis.
+		  g.append("g")
+		      .attr("class", "brush")
+		      .each(function(d) {
+		        d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d]).on("brushstart", brushstart).on("brush", brush));
+		      })
+		    .selectAll("rect")
+		      .attr("x", -8)
+		      .attr("width", 16);
+
+		function position(d) {
+		  var v = dragging[d];
+		  return v == null ? x(d) : v;
+		}
+
+		function transition(g) {
+		  return g.transition().duration(500);
+		}
+
+		// Returns the path for a given data point.
+		function path(d) {
+			// console.log("D",d);
+			li = line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+		  return li;
+		}
+
+		function brushstart() {
+		  d3.event.sourceEvent.stopPropagation();
+		}
+
+		// Handles a brush event, toggling the display of foreground lines.
+		function brush() {
+		  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+		      extents = actives.map(function(p) { return y[p].brush.extent(); });
+		  foreground.style("display", function(d) {
+		    return actives.every(function(p, i) {
+		      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+		    }) ? null : "none";
+		  });
+		}
+	}
+	parcpc(beds);
 }
 
 
