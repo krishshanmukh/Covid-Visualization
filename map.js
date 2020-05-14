@@ -104,23 +104,28 @@ function ready(error, data, beds, us) {
 			select_state(data, d.properties.date[0]["Province_State"]);
 			select_state_pc(beds,d.properties.date[0]["Province_State"]);
 		});
-
+	var f = 0
 	function select_state(data, state){
 		// console.log("State1",data);
+		f = 1
 		statewise = data.filter(function(d){return d["Province_State"] == state;})
 		console.log("State",statewise);
 		d3.selectAll("#donut").remove();
-		d3.selectAll("#parc").remove();
 		update(day);
 		donutchart(statewise);
-		parc(statewise);		
+		if(section == "t1"){
+			d3.selectAll("#parc").remove();
+			parc(statewise);
+		}		
 	}
 	function select_state_pc(data, state){
 		// console.log("State1",data);
 		statewise = data.filter(function(d){return d["state"] == state;})
 		console.log("StatePC",statewise);
-		d3.selectAll("#parcpc").remove();
-		parcpc(statewise);
+		if (section == "t2"){
+			d3.selectAll("#parcpc").remove();
+			parcpc(statewise);
+		}
 		// update(day);
 		// donutchart(statewise);
 		// parc(statewise);		
@@ -268,8 +273,29 @@ function ready(error, data, beds, us) {
 		  };
 		}
 	}//end of donut chart
+	var section = "t1";
+	d3.select('#type')
+			.on("change", function () {
+				var sect = document.getElementById("type");
+				section = sect.options[sect.selectedIndex].value;
+				d3.selectAll("#parcpc").remove();
+				d3.selectAll("#parc").remove();
+				console.log(section);
+				if(f == 0){
+					if(section == "t1"){
+						d3.selectAll("#parcpc").remove();
+						parc(data);
+					}
+					else {
+						d3.selectAll("#parc").remove();
+						parcpc(beds);
+					}
+				}
+			});
+
 	parc(data);
 	function parc(cars){
+		d3.selectAll("#parc").remove();
 		var x = d3.scale.ordinal().rangePoints([0, width], 1),
 		    y = {},
 		    dragging = {};
@@ -410,6 +436,7 @@ function ready(error, data, beds, us) {
 		}
 	}
 	function parcpc(cars){
+		d3.selectAll("#parpc").remove();
 		var x = d3.scale.ordinal().rangePoints([0, width], 1),
 		    y = {},
 		    dragging = {};
@@ -540,7 +567,7 @@ function ready(error, data, beds, us) {
 
 		// Handles a brush event, toggling the display of foreground lines.
 		function brush() {
-		  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+		  var actives = dimensions.filter(function(p) { console.log(y);return !y[p].brush.empty(); }),
 		      extents = actives.map(function(p) { return y[p].brush.extent(); });
 		  foreground.style("display", function(d) {
 		    return actives.every(function(p, i) {
@@ -549,7 +576,7 @@ function ready(error, data, beds, us) {
 		  });
 		}
 	}
-	parcpc(beds);
+	// parcpc(beds);
 }
 
 
