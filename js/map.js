@@ -101,6 +101,7 @@ function ready(error, data, beds, us) {
 		})
 		.on("click", function(d) {
 			console.log("Click",d);
+			// console.log("Day",day);
 			select_state(data, d.properties.date[0]["Province_State"]);
 			select_state_pc(beds,d.properties.date[0]["Province_State"]);
 		});
@@ -112,6 +113,7 @@ function ready(error, data, beds, us) {
 		console.log("State",statewise);
 		d3.selectAll("#donut").remove();
 		update(day);
+		// console.log("Day",day);
 		donutchart(statewise);
 		if(section == "t1"){
 			d3.selectAll("#parc").remove();
@@ -190,6 +192,7 @@ function ready(error, data, beds, us) {
 	update(1);
 	donutchart(data);
 	function donutchart(data){
+		console.log("Day Donut",day);
 		var margin = {top: 20, right: 20, bottom: 20, left: 20};
 	width = document.getElementById('bla').clientWidth - margin.left - margin.right,
 	height = 500 - margin.top - margin.bottom,
@@ -251,10 +254,12 @@ function ready(error, data, beds, us) {
 				});
 
 		  function change(data,day) {
+		  	console.log(day);
 		    pie.value(function(d) {return d[day]; }); // change the value function
 		    path = path.data(pie); // compute the new angles
 		    path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
 		  }
+		  change(data,day);
 		// });
 
 		function type(d) {
