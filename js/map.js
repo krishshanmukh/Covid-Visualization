@@ -1,6 +1,6 @@
 var margin = {top: 20, right: 20, bottom: 20, left: 20};
-	width = 800 - margin.left - margin.right,
-	height = 500 - margin.top - margin.bottom,
+	width = document.getElementById('bla').clientWidth - 40 - margin.left - margin.right,
+	height = 400 - margin.top - margin.bottom,
     formatPercent = d3.format(".1%");
 var day = 1;
 
@@ -18,9 +18,9 @@ tooltip = d3.select("body").append("div")
 	.style("opacity", 0);
 
 queue()
-	.defer(d3.csv, "covid_data_processed.csv")
-	.defer(d3.csv, "beds.csv")
-	.defer(d3.json, "us-counties.topojson")
+	.defer(d3.csv, "js/covid_data_processed.csv")
+	.defer(d3.csv, "js/beds.csv")
+	.defer(d3.json, "js/us-counties.topojson")
 	.await(ready);
 
 var legendText = ["0", "", "10", "", "1000", "", "5000", ""];
@@ -191,7 +191,7 @@ function ready(error, data, beds, us) {
 	donutchart(data);
 	function donutchart(data){
 		var margin = {top: 20, right: 20, bottom: 20, left: 20};
-	width = 800 - margin.left - margin.right,
+	width = document.getElementById('bla').clientWidth - margin.left - margin.right,
 	height = 500 - margin.top - margin.bottom,
     formatPercent = d3.format(".1%");
 		var
@@ -207,14 +207,14 @@ function ready(error, data, beds, us) {
 		    .innerRadius(radius - 100)
 		    .outerRadius(radius - 20);
 
-		var svgpie = d3.select("body").append("svg")
+		var svgpie = d3.select(".donutArea").append("svg")
 		    .attr("width", width)
 		    .attr("height", height)
 		    .attr("id","donut")
 		  .append("g")
 		    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-		d3.csv("covid_data_processed.csv", type, function(error, data) {});
+		d3.csv("js/covid_data_processed.csv", type, function(error, data) {});
 			var slide = d3.select("#slide")
 				.on("input", function() {
 						day = this.value;
