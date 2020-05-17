@@ -1,7 +1,4 @@
-﻿"Title: Hospital Beds per 1,000 Population by Ownership Type | The Henry J. Kaiser Family Foundation"
-"Timeframe: 2018"
-"Location","Total"
-"United States","2.4"
+﻿"Location","Total"
 "Alabama","3.1"
 "Alaska","2.2"
 "Arizona","1.9"
@@ -53,20 +50,3 @@
 "West Virginia","3.8"
 "Wisconsin","2.1"
 "Wyoming","3.5"
-
-"Notes"
-"Data include staffed beds for community hospitals, which represent 85% of all hospitals."
-""
-"Figures may not sum to totals due to rounding."
-
-"Sources"
-"1999 - 2018 AHA Annual Survey, Copyright 2019 by Health Forum, LLC, an affiliate of the American Hospital Association. Special data request, 2019. Available at [http://www.ahaonlinestore.com](https://ams.aha.org/eweb/DynamicPage.aspx?WebCode=ProdDetailAdd&ivd_prc_prd_key=165f9fbf-d766-40a9-96a6-a212aed366bb)."
-""
-"Population data from Annual Population Estimates by State, U.S. Census Bureau; available at [http://www.census.gov/popest/](http://www.census.gov/popest/)."
-
-"Definitions"
-"*Community Hospitals:* All nonfederal, short-term general, and specialty hospitals whose facilities and services are available to the public."
-""
-"*N/A*: Not applicable when state/local government, non-profit, or for-profit hospitals do not exist in the state."
-
-
