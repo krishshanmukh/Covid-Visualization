@@ -22,8 +22,6 @@ tooltip = d3.select("body").append("div")
 queue()
 	.defer(d3.csv, "js/covid_data_processed.csv")
 	.defer(d3.csv, "js/beds.csv")
-	.defer(d3.csv, "js/beds_all.csv")
-	.defer(d3.csv, "js/beds_us.csv")
 	.defer(d3.csv, "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us.csv")
 	.defer(d3.csv, "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv")
 	.defer(d3.csv, "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
@@ -35,7 +33,7 @@ var legendColors = ["#fff7bc", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4
 
 
 
-function ready(error, data, beds,beds_all,beds_us,data_us,data_states,data_counties, us) {
+function ready(error, data, beds,data_us,data_states,data_counties, us) {
 	console.log("Data",data);
 	console.log("US",data_us);
 	console.log("States",data_states);
@@ -61,27 +59,6 @@ function ready(error, data, beds,beds_all,beds_us,data_us,data_states,data_count
 		d.cases = +d.cases;
 		d.deaths = +d.deaths;
 		d.POPULATION = +d.POPULATION;
-	});
-
-	beds_all.forEach(function(d) {
-		// console.log("Rows",Object.keys(d));
-		d.date = parseDate(d.date);
-		d.days = +d.days;
-		d.cases = +d.cases;
-		d.deaths = +d.deaths;
-		d.casespm = +d.casespm;
-		d.casespt = +d.casespt;
-	});
-	beds_us.forEach(function(d) {
-		// console.log("Rows",Object.keys(d));
-		d.date = parseDate(d.date);
-		d.days = +d.days;
-		d.cases = +d.cases;
-		d.deaths = +d.deaths;
-		d.Total = +d.Total;
-		d.Pop = +d.Pop;
-		d.casespm = +d.casespm;
-		d.casespt = +d.casespt;
 	});
 
 	// for (var i = 0; i < data_us.length; i++) {
@@ -167,8 +144,7 @@ function ready(error, data, beds,beds_all,beds_us,data_us,data_states,data_count
 			// console.log("Day",day);
 			select_state(data, d.properties.date[0]["Province_State"]);
 			select_state_pc(beds,d.properties.date[0]["Province_State"]);
-			// lc_data(data_us,data_counties,data_states,d.properties.date[0]["Province_State"],d.properties.date[0]["Admin2"]);
-			lc_data_1(beds_all,beds_us,d.properties.date[0]["Province_State"],day);
+			lc_data(data_us,data_counties,data_states,d.properties.date[0]["Province_State"],d.properties.date[0]["Admin2"]);
 		});
 	var f = 0
 
@@ -216,20 +192,6 @@ function ready(error, data, beds,beds_all,beds_us,data_us,data_states,data_count
 		console.log("Final",final);
 		d3.selectAll("#linec").remove();
 		lineChart(final);
-		// console.log("Test",final.state[0].cases);
-	}
-
-	function lc_data_1(beds_all,beds_us,state,day){
-
-		var state1 = beds_all.filter(function(d){return d["state"] == state;})
-		
-		var final1 = {
-			"us":beds_us,
-			"state": state1
-		};
-		console.log("Final1",final1);
-		d3.selectAll("#linec").remove();
-		lineChart1(final1);
 		// console.log("Test",final.state[0].cases);
 	}
 
@@ -806,79 +768,6 @@ function ready(error, data, beds,beds_all,beds_us,data_us,data_states,data_count
 	        .attr("class", "line")
 	        .attr("id","line_county")
 	        .attr("d", valueline(data.county));
-
-	    // Add the X Axis
-	    svg.append("g")
-	        .attr("class", "x axis")
-	        .attr("transform", "translate(0," + height + ")")
-	        .call(xAxis);
-
-	    // Add the Y Axis
-	    svg.append("g")
-	        .attr("class", "y axis")
-	        .call(yAxis);
-
-
-	}
-	function lineChart1(data){
-		// Set the dimensions of the canvas / graph
-		var margin = {top: 30, right: 20, bottom: 30, left: 50},
-		    width = 600 - margin.left - margin.right,
-		    height = 470 - margin.top - margin.bottom;
-
-		// Parse the date / time
-		var parseDate = d3.time.format("%Y-%m-%d").parse,
-		    formatDate = d3.time.format("%d-%b"),
-		    bisectDate = d3.bisector(function(d) { return d.date; }).left;
-
-		// Set the ranges
-		var x = d3.time.scale().range([0, width]);
-		var y = d3.scale.linear().range([height, 0]);
-
-		// Define the axes
-		var xAxis = d3.svg.axis().scale(x)
-		    .orient("bottom").ticks(5);
-
-		var yAxis = d3.svg.axis().scale(y)
-		    .orient("left").ticks(5);
-
-		// Define the line
-		var valueline = d3.svg.line()
-		    .x(function(d) { return x(d.date); })
-		    .y(function(d) { return y(d.casespt); });
-		    
-		// Adds the svg canvas
-		var svg = d3.select("body")
-		    .append("svg")
-		        .attr("width", width + margin.left + margin.right)
-		        .attr("height", height + margin.top + margin.bottom)
-		        .attr("id","linec")
-		    .append("g")
-		        .attr("transform", 
-		              "translate(" + margin.left + "," + margin.top + ")");
-
-		var lineSvg = svg.append("g"); 
-
-		var focus_us = svg.append("g") 
-		    .style("display", "none");
-
-		var focus_state = svg.append("g") 
-		    .style("display", "none");
-		        	    
-	    // Scale the range of the data
-	    x.domain(d3.extent(data.us, function(d) { return d.date; }));
-	    y.domain([0, d3.max(data.us, function(d) { return d.casespt; })]);
-
-	    // Add the valueline path.
-	    lineSvg.append("path")
-	        .attr("class", "line")
-	        .attr("id","line_us")
-	        .attr("d", valueline(data.us));
-
-        lineSvg.append("path")
-	        .attr("class", "line")
-	        .attr("id","line_state")
-	        .attr("d", valueline(data.state));
 
 	    // Add the X Axis
 	    svg.append("g")
