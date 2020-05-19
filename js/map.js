@@ -36,7 +36,7 @@ function lc_data_1(beds_all,beds_us,state,day){
 				"state": state1,
 				"name": state
 			};
-			// console.log("Final1",final1);
+			console.log("Final1",final1);
 			d3.selectAll("#linec").remove();
 			lineChart1(final1);
 			// console.log("Test",final.state[0].cases);
@@ -277,7 +277,14 @@ function lineChart1(data){
 	var valueline = d3.svg.line()
 	    .x(function(d) { return x(d.date); })
 	    .y(function(d) { return y(d.casespt); });
-	    
+
+    var valueline1 = d3.svg.line()
+	    .x(function(d) { return x(d.date); })
+	    // .y(function(d) { return y(((d.cases+1)/(d.deaths+1))*1000); });
+	    .y(function(d) { var ret = ((d.deaths+0.001)/(d.casespt+0.001))*100;
+	    	console.log(d.casespt,d.cases,d.deaths,ret);
+	    	return y(ret); });
+	    // console.log(y((d.cases+1)/(d.deaths+1))*1000);
 	// Adds the svg canvas
 	var svg = d3.select("#ts")
 	    .append("svg")
@@ -311,6 +318,16 @@ function lineChart1(data){
         .attr("id","line_state")
         .attr("d", valueline(data.state));
 
+    // lineSvg.append("path")
+    //     .attr("class", "line")
+    //     .attr("id","line_state1")
+    //     .attr("d", valueline1(data.state));
+
+    // lineSvg.append("path")
+    //     .attr("class", "line")
+    //     .attr("id","line_us1")
+    //     .attr("d", valueline1(data.us));
+
     // Add the X Axis
     svg.append("g")
         .attr("class", "x axis")
@@ -325,7 +342,7 @@ function lineChart1(data){
     svg.append("text")
             .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
             .attr("transform", "translate("+ (-30) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
-            .text("Cases per million");
+            .text("Cases per thousand");
 
     svg.append("text")
             .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
@@ -336,7 +353,7 @@ function lineChart1(data){
 		.attr("id", "legend");
 
 		var legenditem = legend.selectAll(".legenditem")
-			.data(d3.range(2))
+			.data(d3.range(1))
 			.enter()
 			.append("g")
 				.attr("class", "legenditem")
@@ -348,13 +365,27 @@ function lineChart1(data){
 			.attr("width", 30)
 			.attr("height", 6)
 			.attr("class", "rect")
-			.style("fill", function(d, i) { return legendColors[i]; });
+			.style("fill", legendColors[0]);
+
+		legenditem.append("rect")
+			.attr("x", width - 300)
+			.attr("y", 20)
+			.attr("width", 30)
+			.attr("height", 6)
+			.attr("class", "rect")
+			.style("fill", legendColors[1]);
 
 		legenditem.append("text")
-			.attr("x", width - 290)
-			.attr("y", 30)
-			.style("text-anchor", "middle")
-			.text(function(d, i) { return legendText[i]; });
+			.attr("x", width - 265)
+			.attr("y", 15)
+			.style("text-anchor", "left")
+			.text( legendText[0]);
+
+		legenditem.append("text")
+			.attr("x", width - 265)
+			.attr("y", 25)
+			.style("text-anchor", "left")
+			.text(legendText[1]);
 
 
 }
@@ -378,14 +409,17 @@ function parcpc(cars,day,sel){
 	    .attr("width", width + margin.left + margin.right)
 	    .attr("height", height + margin.top + margin.bottom)
 	  .append("g")
-	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+	   //  .call(d3.behavior.zoom().on("zoom", function () {
+		  //   svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")")
+		  // }));
 
 	  // Extract the list of dimensions and create a scale for each.
 	  x.domain(dimensions = d3.keys(cars[0]).filter(function(d) {
 	    return (d != "days" && d != "state" && d != "date" && d != "Combined_Key"&& d != "casespm"&& d != "fips") && (y[d] = d3.scale.linear()
 	    // return (d == "1" && d == "10" && d == "20" && d == "40" && d == "60" && d == "80") && (y[d] = d3.scale.linear()
 	        .domain(d3.extent(cars, function(p) { return +p[d]; }))
-	        .range([height, 0]));
+	        .range([height, 1]));
 	  }));
 
 	  var focus_line = cars.filter(function (d){ return d['state'] == sel})
@@ -436,12 +470,12 @@ function parcpc(cars,day,sel){
 
 	    if(sel != null)
 	    {
-	    	console.log(sel);
+	    	// console.log(sel);
 	    	foreground.style("display","none");
 	    }
 	     else
 	    {
-	    	console.log(sel);
+	    	// console.log(sel);
 	    	foreground.style("display",null);
 	    }
 	  // Add a group element for each dimension.
@@ -528,11 +562,28 @@ function parcpc(cars,day,sel){
 	function brush() {
 	  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
 	      extents = actives.map(function(p) { return y[p].brush.extent(); });
+
+	  console.log(actives,extents);
+
+
 	  foreground.style("display", function(d) {
 	    return actives.every(function(p, i) {
 	      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
 	    }) ? null : "none";
 	  });
+	}
+
+	function keep_data() {
+	var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+      	extents = actives.map(function(p) { return y[p].brush.extent(); });
+
+	  new_data = actives();
+	  if (new_data.length == 0) {
+	    alert("I don't mean to be rude, but I can't let you remove all the data.\n\nTry removing some brushes to get your data back. Then click 'Keep' when you've selected data you want to look closer at.");
+	    return false;
+	  }
+	  data = new_data;
+	  rescale();
 	}
 }
 
