@@ -246,6 +246,7 @@ function map1() {
 			.text(function(d, i) { return legendText[i]; });
 		map3();
 		document.getElementById("cases").innerHTML = "Cases: " + cases_sum[day]; 
+		document.getElementById("deaths").innerHTML = "Deaths: " + deaths_sum[day]; 
 	
 	}	
 }
@@ -864,6 +865,8 @@ function updateSlider(elt) {
 	// console.log(cases_g);
 
 	document.getElementById("cases").innerHTML = "Cases: " + cases_sum[day]; 
+	document.getElementById("deaths").innerHTML = "Deaths: " + deaths_sum[day]; 
+	select_state_pc(beds_all_gl,day); 
 }
 
       function drawWordCloud(word_count){
