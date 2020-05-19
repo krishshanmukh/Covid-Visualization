@@ -4,6 +4,7 @@ var cases_g, deaths_g, day = "4/1/20", state_shapes_1, color_1, color_1_int;
 var cases_g, deaths_g, state_shapes_2, color_2, color_3_int;
 var cases_g, deaths_g, state_shapes_3, color_2, color_3_int;
 var cases_sum, deaths_sum;
+var word_count = {};
 var usa_g;
 
 var beds_all_gl;
@@ -78,6 +79,9 @@ function getColor3(d) {
 	var dataRow = countryById1.get(d.properties.name);
 	if (dataRow) {
 		c = dataRow["Beds"] - dataRow[day]/dataRow['Population']*1000;
+		if (c < 0) {
+			word_count[dataRow["Abbreviation"]] = -c;
+		}
 		// console.log(c, color_3(c));
 		return color_3(c);
 	} else {
@@ -831,6 +835,7 @@ function map3() {
 		.text(function(d, i) { return legendText[i]; });
 		document.getElementById("cases").innerHTML = "Cases: " + cases_sum[day]; 
 		document.getElementById("deaths").innerHTML = "Deaths: " + deaths_sum[day]; 
+		drawWordCloud(word_count);
 }
 
 
@@ -838,6 +843,7 @@ function updateSlider(elt) {
 
 	day = elt;
 	// console.log(elt);
+	word_count = {};
 
 	state_shapes_1.style("fill", function(d) {
 		// console.log(d.properties);
@@ -853,12 +859,61 @@ function updateSlider(elt) {
 		// console.log(d.properties);
 		return getColor3(d);
 	});
+	drawWordCloud(word_count);
 
 	// console.log(cases_g);
 
 	document.getElementById("cases").innerHTML = "Cases: " + cases_sum[day]; 
-	document.getElementById("deaths").innerHTML = "Deaths: " + deaths_sum[day];
-	select_state_pc(beds_all_gl,day); 
+}
+
+      function drawWordCloud(word_count){
+        var svg_location = "#chart";
+        var width = document.getElementById('map1').clientWidth;
+        var height = 150;
+
+        var fill = d3.scale.category20();
+
+        var word_entries = d3.entries(word_count);
+
+        var xScale = d3.scale.linear()
+           .domain([0, d3.max(word_entries, function(d) {
+              return d.value;
+            })
+           ])
+           .range([10,70]);
+
+        d3.layout.cloud().size([width, height])
+          .timeInterval(20)
+          .words(word_entries)
+          .fontSize(function(d) { return xScale(+d.value); })
+          .text(function(d) { return d.key; })
+          .rotate(function() { return ~~(Math.random() * 2) * 90; })
+          .font("Impact")
+          .on("end", draw)
+		  .start();
+		console.log(word_entries);
+
+        function draw(words) {
+		  document.getElementById("chart").innerHTML = "";
+          d3.select(svg_location).append("svg")
+              .attr("width", width)
+              .attr("height", height)
+            .append("g")
+              .attr("transform", "translate(" + [width >> 1, height >> 1] + ")")
+            .selectAll("text")
+              .data(words)
+            .enter().append("text")
+              .style("font-size", function(d) { return xScale(d.value) + "px"; })
+              .style("font-family", "Impact")
+              .style("fill", function(d, i) { return fill(i); })
+              .attr("text-anchor", "middle")
+              .attr("transform", function(d) {
+                return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+              })
+              .text(function(d) { return d.key; });
+        }
+
+        d3.layout.cloud().stop();
 }
 map1();
 map2();
