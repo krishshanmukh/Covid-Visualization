@@ -65,6 +65,9 @@ function getColor2(d) {
 	if (dataRow1 && dataRow2) {
 		c = dataRow2[day]/dataRow1[day]*100;
 		// console.log(day, dataRow1[day], dataRow2[day], d.properties.name)
+		if (dataRow1[day] == 0) {
+			return "#fff7bc";
+		}
 		return color_2(c);
 	} else {
 		return "#fff7bc";
@@ -114,7 +117,7 @@ function map1() {
 		var dataRow = countryById1.get(d.properties.name);
 			if (dataRow) {
 				// console.log(day);
-				return dataRow.State + ": " + parseInt(dataRow[day]/+dataRow['Population']*1000000);
+				return dataRow.State + ": " + parseInt(dataRow[day]/+dataRow['Population']*1000000) + ", Total Cases: " + dataRow[day];
 			} else {
 				// console.log("no dataRow", d);
 				return d.properties.name + ": No data.";
